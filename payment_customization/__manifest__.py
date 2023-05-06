@@ -1,15 +1,15 @@
 {
     'name' : 'Payment Customization',
-    'version' : '0.0',
+    'version' : '0.1',
     'summary': 'Payment & Customization',
-    'sequence': 1,
+    'sequence': 0,
     'description': """
     """,
-    'category': 'Accounting/Accounting',
     'website': 'https://www.linkedin.com/in/neeraj-krishnan-6293b4121/',
     'depends' : ['account'],
     'data': [
-
+        'security/ir.model.access.csv',
+            'views/account_payment_due_payment.xml'
     ],
 
 
