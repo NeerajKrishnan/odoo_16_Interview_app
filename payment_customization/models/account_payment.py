@@ -17,3 +17,14 @@ class AccountPayment(models.Model):
         'account.payment.due.payment.line',
         'payment_id',
         string="Due Payment")
+
+    def action_due_payment_line(self):
+        create_value =[(5,0,0)]
+        invoices =  self.env['account.move'].search([('payment_state', 'in', ['not_paid','partial']),
+                                                    ('partner_id', '=', self.partner_id.id)])
+
+        for rec in invoices:
+            create_value.append((0,0,{'invoice_id':rec.id}))
+        print(create_value)
+        # print(((0,0,create_value)))
+        self.write({'due_payment_ids':create_value})

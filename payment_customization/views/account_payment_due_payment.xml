@@ -5,13 +5,29 @@
             <field name="model">account.payment</field>
             <field name="inherit_id" ref="account.view_account_payment_form" />
             <field name="arch" type="xml">
+
+
+
+
                 <xpath expr="//group[@name='group2']" position="after">
+<!--<field name="compute_due_amount"></field>-->
+
 
  <notebook>
+
+
                     <page id="due_invoice_ids"   string="Due Invoice Lines">
+
+
+                              <button name="action_due_payment_line"  class="btn-primary" string="Generate Due Invoice" type="object" />
+
 <field name="due_payment_ids">
 
+
+<br></br>
+
     <tree create="false" delete="false" edit="false"  editable="bottom">
+                <field name="id" readonly="1"></field>
 
                 <field name="invoice_id" readonly="1"></field>
         <field name="payment_status"  readonly="1"></field>
