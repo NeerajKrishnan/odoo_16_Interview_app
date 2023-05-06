@@ -41,7 +41,14 @@ class AccountPayment(models.Model):
                                                               line.invoice_id.payment_state in ['not_paid','partial'] ):
             total_amount = total_amount+rec.amount_payment
             if self.amount >= total_amount:
-                return rec.invoice_id.action_register_payment()
+                payments = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                             active_ids=rec.invoice_id.id).create({
+                    'amount': rec.amount_payment,
+                    'group_payment': True,
+                    'payment_difference_handling': 'open',
+                    'currency_id': rec.currency_id.id,
+                    # 'payment_method_line_id': self.inbound_payment_method_line.id,
+                })._create_payments()
             else:
                 raise UserError(_("Please check the Amount has been Exceeded"))
 
