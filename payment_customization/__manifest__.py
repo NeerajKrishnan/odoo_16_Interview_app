@@ -1,6 +1,6 @@
 {
     'name' : 'Payment Customization',
-    'version' : '0.3',
+    'version' : '0.5',
     'summary': 'Payment & Customization',
     'sequence': 0,
     'description': """
