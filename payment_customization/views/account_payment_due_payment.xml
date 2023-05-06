@@ -22,6 +22,9 @@
                               <button name="action_due_payment_line"  class="btn-primary" string="Generate Due Invoice" type="object" />
                               <button name="action_to_makepayment"  class="btn-primary" string="Submit" type="object" />
 
+
+
+                        <field name="due_difference"></field>
 <field name="due_payment_ids">
 
 
