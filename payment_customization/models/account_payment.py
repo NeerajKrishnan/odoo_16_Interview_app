@@ -64,7 +64,7 @@ class AccountPayment(models.Model):
                     'payment_difference_handling': 'open',
                     'currency_id': rec.currency_id.id,
                 })._create_payments()
-                self.due_difference = self.due_difference - total_amount
+            self.due_difference = self.due_difference - total_amount
         else:
             raise UserError(_("Please check the Amount has been Exceeded "))
 

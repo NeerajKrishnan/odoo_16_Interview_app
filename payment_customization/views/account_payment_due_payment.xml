@@ -1,59 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-        <record id="view_account_payment_due_line_form_inherited" model="ir.ui.view">
-            <field name="name">account.payment.due.line.form.inherited</field>
-            <field name="model">account.payment</field>
-            <field name="inherit_id" ref="account.view_account_payment_form" />
-            <field name="arch" type="xml">
+    <record id="view_account_payment_due_line_form_inherited" model="ir.ui.view">
+        <field name="name">account.payment.due.line.form.inherited</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
 
 
+            <xpath expr="//button[@name='mark_as_sent']" position="after">
+
+                                        <button name="action_to_makepayment" class="btn-primary" string="Batch Payment" type="object"/>
 
 
-                <xpath expr="//group[@name='group2']" position="after">
-<!--<field name="compute_due_amount"></field>-->
+            </xpath>
 
 
- <notebook   attrs="{'invisible': [('payment_type','!=', 'outbound'),  ('partner_type','!=', 'supplier')]}">
+            <xpath expr="//group[@name='group2']" position="after">
+                <!--<field name="compute_due_amount"></field>-->
 
 
-                    <page id="due_invoice_ids"   string="Due Invoice Lines">
+                <notebook
+                        attrs="{'invisible': [('payment_type','!=', 'outbound'),  ('partner_type','!=', 'supplier')]}">
 
 
-                              <button name="action_due_payment_line"  class="btn-primary" string="Generate Due Invoice" type="object" />
-                              <button name="action_to_makepayment"  class="btn-primary" string="Batch Payment" type="object" />
+                    <page id="due_invoice_ids" string="Due Invoice Lines">
 
+
+                        <button name="action_due_payment_line" class="btn-primary" string="Generate Due Invoice"
+                                type="object"/>
 
 
                         <field name="due_difference"></field>
-<field name="due_payment_ids">
+                        <field name="due_payment_ids">
 
 
-<br></br>
+                            <br></br>
 
-    <tree create="false" delete="false" edit="false"  editable="bottom">
-                <field name="id" readonly="1"></field>
+                            <tree create="false" delete="false" edit="false" editable="bottom">
+                                <field name="invoice_id" readonly="1"></field>
+                                <field name="payment_status" readonly="1"></field>
+                                <field name="currency_id" readonly="1"></field>
+                                <field name="due_amount" widget="monetary" string="Due Amount"/>
+                                <field name="amount_payment" widget="monetary"></field>
 
-                <field name="invoice_id" readonly="1"></field>
-        <field name="payment_status"  readonly="1"></field>
-        <field name="currency_id" ></field>
-        <field name="due_amount" widget="monetary"/>
-        <field name="amount_payment"  widget="monetary"></field>
+                                <field name="checked"></field>
 
-        <field name="checked"></field>
+                            </tree>
 
-    </tree>
-
-</field>
+                        </field>
 
 
                     </page>
- </notebook>
+                </notebook>
 
 
-                </xpath>
+            </xpath>
 
-            </field>
-        </record>
+        </field>
+    </record>
 
 
 </odoo>
