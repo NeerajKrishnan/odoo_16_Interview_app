@@ -13,14 +13,14 @@
 <!--<field name="compute_due_amount"></field>-->
 
 
- <notebook>
+ <notebook   attrs="{'invisible': [('payment_type','!=', 'outbound'),  ('partner_type','!=', 'supplier')]}">
 
 
                     <page id="due_invoice_ids"   string="Due Invoice Lines">
 
 
                               <button name="action_due_payment_line"  class="btn-primary" string="Generate Due Invoice" type="object" />
-                              <button name="action_to_makepayment"  class="btn-primary" string="Submit" type="object" />
+                              <button name="action_to_makepayment"  class="btn-primary" string="Batch Payment" type="object" />
 
 
 

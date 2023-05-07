@@ -25,19 +25,17 @@ class AccountPayment(models.Model):
         'account.payment.due.payment.line',
         'payment_id',
         string="Due Payment")
-
-    due_difference = fields.Monetary(compute ='_compute_due_fields',store=True)
-
-    def _compute_due_fields(self):
-        for rec in self:
-            rec.due_difference= rec.amount
-
+    is_generated = fields.Boolean(default=True)
+    due_difference = fields.Monetary(readonly=True)
 
 
 
     def action_due_payment_line(self):
+            if self.is_generated:
+                self.due_difference = self.amount
+                self.is_generated = False
             create_value =[(5,0,0)]
-            invoices =  self.env['account.move'].search([('payment_state', 'in', ['not_paid','partial']),
+            invoices =  self.env['account.move'].search([('payment_state', 'in', ['not_paid','partial']),('move_type', '=', 'out_invoice'),
                                                         ('partner_id', '=', self.partner_id.id)])
 
             for rec in invoices:
@@ -51,22 +49,23 @@ class AccountPayment(models.Model):
             for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
                                                                   line.invoice_id.payment_state in ['not_paid','partial'] ):
                 total_amount = total_amount+rec.amount_payment
-
-
-                if self.amount > total_amount:
-                    payments = self.env['account.payment.register'].with_context(active_model='account.move',
-                                                                                 active_ids=rec.invoice_id.id).create({
-                        'amount': rec.amount_payment,
-                        'group_payment': True,
-                        'payment_difference_handling': 'open',
-                        'currency_id': rec.currency_id.id,
-                    })._create_payments()
-                    self.due_difference = self.due_difference - total_amount
-                else:
-                    raise UserError(_("Please check the Amount has been Exceeded"))
         else:
             raise UserError(_("Please check the Amount has been Exceeded "))
 
 
+
+        if  self.due_difference - total_amount >= 0:
+            for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
+                                                                  line.invoice_id.payment_state in ['not_paid', 'partial']):
+                payments = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                             active_ids=rec.invoice_id.id).create({
+                    'amount': rec.amount_payment,
+                    'group_payment': True,
+                    'payment_difference_handling': 'open',
+                    'currency_id': rec.currency_id.id,
+                })._create_payments()
+                self.due_difference = self.due_difference - total_amount
+        else:
+            raise UserError(_("Please check the Amount has been Exceeded "))
 
 
