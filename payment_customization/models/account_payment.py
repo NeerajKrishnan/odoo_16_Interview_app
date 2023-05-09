@@ -8,15 +8,22 @@ class AccountPaymentDuePayment(models.Model):
                                  string='Payment')
     invoice_id = fields.Many2one('account.move',string="Bill")
     currency_id = fields.Many2one('res.currency', related='invoice_id.currency_id')
-    due_amount = fields.Monetary(string="due_amount",compute='_compute_due_total')
+    due_amount = fields.Monetary(string="due_amount")
     amount_payment = fields.Monetary(string="Amount")
-    payment_status = fields.Selection(related='invoice_id.payment_state')
+    payment_status = fields.Selection(selection=[('not_paid','Not Paid'),
+                                                    ('in_payment','In Payment'),
+                                                    ('paid','Paid'	),
+                                                    ('partial','Partially Paid'),
+                                                    ('reversed','Reversed'	),
+                                                    ('invoicing_legacy','Invoicing App Legacy')
+                                         ], string='Payment Status', readonly=True)
     checked = fields.Boolean()
-
-    @api.depends('invoice_id')
-    def _compute_due_total(self):
-        for rec in self:
-            rec.due_amount = rec.invoice_id.amount_residual
+    @api.onchange('checked')
+    def calculate_remaining(self):
+        if self.checked:
+                temp = self.payment_id.due_difference - self.due_amount
+                if temp >= 0 :
+                    self.amount_payment = self.due_amount +temp
 
 
 class AccountPayment(models.Model):
@@ -27,6 +34,15 @@ class AccountPayment(models.Model):
         string="Due Payment")
     is_generated = fields.Boolean(default=True)
     due_difference = fields.Monetary(readonly=True)
+
+    @api.onchange('due_payment_ids')
+    def calculate_total(self):
+        total =0
+        for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
+                                                                  line.invoice_id.payment_state in ['not_paid', 'partial']):
+            total = total + rec.amount_payment
+        if (self.due_difference - total) <0:
+            raise UserError(_("Please check the Amount has been Exceeded "))
 
 
 
@@ -39,7 +55,11 @@ class AccountPayment(models.Model):
                                                         ('partner_id', '=', self.partner_id.id)])
 
             for rec in invoices:
-                create_value.append((0,0,{'invoice_id':rec.id}))
+                create_value.append((0,0,{'invoice_id':rec.id
+                                          ,'payment_status':rec.payment_state
+                                          ,'due_amount':rec.amount_residual
+
+                                          }))
             self.write({'due_payment_ids':create_value})
 
 
