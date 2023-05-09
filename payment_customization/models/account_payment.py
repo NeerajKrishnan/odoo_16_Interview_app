@@ -21,14 +21,12 @@ class AccountPaymentDuePayment(models.Model):
     @api.onchange('checked')
     def calculate_remaining(self):
         if self.checked:
-                temp = self.payment_id.due_difference - self.due_amount
+                temp =  self.due_amount - self.payment_id.due_difference
                 if temp <= 0 :
-                    self.amount_payment =  self.payment_id.due_difference
+                    self.amount_payment =  self.due_amount
                 else:
-                    if self.due_amount >  self.payment_id.due_difference:
-                        self.amount_payment=self.due_difference
-                    else:
-                        self.amount_payment = self.amount_payment  - self.due_amount
+                    self.amount_payment = self.payment_id.due_difference
+
         else:
             self.amount_payment = 0
 
@@ -41,9 +39,9 @@ class AccountPayment(models.Model):
         'payment_id',
         string="Due Payment")
     is_generated = fields.Boolean(default=True)
-    due_difference = fields.Monetary(readonly=True)
+    due_difference = fields.Monetary(compute = 'calculate_total')
 
-    @api.onchange('due_payment_ids')
+    @api.depends('due_payment_ids')
     def calculate_total(self):
         total =0
         due_ids =  self.due_payment_ids.filtered(lambda line: line.checked == True and
@@ -51,10 +49,13 @@ class AccountPayment(models.Model):
         if due_ids:
             for rec in due_ids:
                 total = total + rec.amount_payment
-            if (self.due_difference - total) < 0:
-                raise UserError(_("Please check the Amount has been Exceeded "))
+            if (self.amount - total) < 0:
+                self.due_difference = -1
+                # raise UserError(_("Please check the Amount has been Exceeded "))
+
             else:
-                self.due_difference =self.due_difference -total
+
+                self.due_difference =self.amount -total
 
         else:
             self.due_difference = self.amount
@@ -77,18 +78,9 @@ class AccountPayment(models.Model):
 
 
     def action_to_makepayment(self):
-        total_amount = 0
-        if self.due_difference >= 0:
-            for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
-                                                                  line.invoice_id.payment_state in ['not_paid','partial'] ):
-                total_amount = total_amount+rec.amount_payment
-        else:
+        if self.due_difference < 0:
             raise UserError(_("Please check the Amount has been Exceeded "))
-
-
-
-        if  self.due_difference - total_amount >= 0:
-            for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
+        for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
                                                                   line.invoice_id.payment_state in ['not_paid', 'partial']):
                 payments = self.env['account.payment.register'].with_context(active_model='account.move',
                                                                              active_ids=rec.invoice_id.id).create({
@@ -97,8 +89,5 @@ class AccountPayment(models.Model):
                     'payment_difference_handling': 'open',
                     'currency_id': rec.currency_id.id,
                 })._create_payments()
-            self.due_difference = self.due_difference - total_amount
-        else:
-            raise UserError(_("Please check the Amount has been Exceeded "))
 
 
