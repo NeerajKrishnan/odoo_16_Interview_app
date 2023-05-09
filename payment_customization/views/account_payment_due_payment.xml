@@ -31,6 +31,13 @@
 
 
                         <field name="due_difference"></field>
+
+
+
+
+
+
+
                         <field name="due_payment_ids">
 
 
@@ -40,10 +47,10 @@
                                 <field name="invoice_id" readonly="1"></field>
                                 <field name="payment_status" readonly="1"></field>
                                 <field name="currency_id" readonly="1"></field>
-                                <field name="due_amount" widget="monetary" string="Due Amount"/>
-                                <field name="amount_payment" widget="monetary"></field>
-
-                                <field name="checked"></field>
+                                <field name="due_amount" widget="monetary" string="Due Amount" readonly="1"/>
+                                <field name="amount_payment" widget="monetary"  attrs="{'readonly':[('is_submitted','=',False)]}"></field>
+                                <field name="is_submitted" invisible="1"></field>
+                                <field name="checked"      attrs="{'readonly':[('is_submitted','=',False)]}" ></field>
 
                             </tree>
 

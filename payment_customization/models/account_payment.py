@@ -17,6 +17,7 @@ class AccountPaymentDuePayment(models.Model):
                                                     ('reversed','Reversed'	),
                                                     ('invoicing_legacy','Invoicing App Legacy')
                                          ], string='Payment Status', readonly=True)
+    is_submitted = fields.Boolean(related = 'payment_id.is_submited')
     checked = fields.Boolean()
     @api.onchange('checked')
     def calculate_remaining(self):
@@ -39,6 +40,7 @@ class AccountPayment(models.Model):
         'payment_id',
         string="Due Payment")
     is_generated = fields.Boolean(default=True)
+    is_submited = fields.Boolean(default=True)
     due_difference = fields.Monetary(compute = 'calculate_total')
 
     @api.depends('due_payment_ids')
@@ -61,33 +63,38 @@ class AccountPayment(models.Model):
             self.due_difference = self.amount
 
     def action_due_payment_line(self):
-            if self.is_generated:
-                self.due_difference = self.amount
-                self.is_generated = False
-            create_value =[(5,0,0)]
-            invoices =  self.env['account.move'].search([('payment_state', 'in', ['not_paid','partial']),('move_type', '=', 'out_invoice'),
-                                                        ('partner_id', '=', self.partner_id.id)])
+        if self.is_submited:
+                if self.is_generated:
+                    self.due_difference = self.amount
+                    self.is_generated = False
+                create_value =[(5,0,0)]
+                invoices =  self.env['account.move'].search([('payment_state', 'in', ['not_paid','partial']),('move_type', '=', 'out_invoice'),
+                                                            ('partner_id', '=', self.partner_id.id)])
 
-            for rec in invoices:
-                create_value.append((0,0,{'invoice_id':rec.id
-                                          ,'payment_status':rec.payment_state
-                                          ,'due_amount':rec.amount_residual
+                for rec in invoices:
+                    create_value.append((0,0,{'invoice_id':rec.id
+                                              ,'payment_status':rec.payment_state
+                                              ,'due_amount':rec.amount_residual
 
-                                          }))
-            self.write({'due_payment_ids':create_value})
+                                              }))
+                self.write({'due_payment_ids':create_value})
 
 
     def action_to_makepayment(self):
+
+
         if self.due_difference < 0:
             raise UserError(_("Please check the Amount has been Exceeded "))
-        for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
-                                                                  line.invoice_id.payment_state in ['not_paid', 'partial']):
-                payments = self.env['account.payment.register'].with_context(active_model='account.move',
-                                                                             active_ids=rec.invoice_id.id).create({
-                    'amount': rec.amount_payment,
-                    'group_payment': True,
-                    'payment_difference_handling': 'open',
-                    'currency_id': rec.currency_id.id,
-                })._create_payments()
+        if self.is_submited:
+            for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
+                                                                      line.invoice_id.payment_state in ['not_paid', 'partial']):
+                    payments = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                                 active_ids=rec.invoice_id.id).create({
+                        'amount': rec.amount_payment,
+                        'group_payment': True,
+                        'payment_difference_handling': 'open',
+                        'currency_id': rec.currency_id.id,
+                    })._create_payments()
 
 
+            self.is_submited = False
