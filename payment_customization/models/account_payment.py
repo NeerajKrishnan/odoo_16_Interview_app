@@ -22,8 +22,16 @@ class AccountPaymentDuePayment(models.Model):
     def calculate_remaining(self):
         if self.checked:
                 temp = self.payment_id.due_difference - self.due_amount
-                if temp >= 0 :
-                    self.amount_payment = self.due_amount +temp
+                if temp <= 0 :
+                    self.amount_payment =  self.payment_id.due_difference
+                else:
+                    if self.due_amount >  self.payment_id.due_difference:
+                        self.amount_payment=self.due_difference
+                    else:
+                        self.amount_payment = self.amount_payment  - self.due_amount
+        else:
+            self.amount_payment = 0
+
 
 
 class AccountPayment(models.Model):
@@ -38,13 +46,18 @@ class AccountPayment(models.Model):
     @api.onchange('due_payment_ids')
     def calculate_total(self):
         total =0
-        for rec in self.due_payment_ids.filtered(lambda line: line.checked == True and
-                                                                  line.invoice_id.payment_state in ['not_paid', 'partial']):
-            total = total + rec.amount_payment
-        if (self.due_difference - total) <0:
-            raise UserError(_("Please check the Amount has been Exceeded "))
+        due_ids =  self.due_payment_ids.filtered(lambda line: line.checked == True and
+                                                                  line.invoice_id.payment_state in ['not_paid', 'partial'])
+        if due_ids:
+            for rec in due_ids:
+                total = total + rec.amount_payment
+            if (self.due_difference - total) < 0:
+                raise UserError(_("Please check the Amount has been Exceeded "))
+            else:
+                self.due_difference =self.due_difference -total
 
-
+        else:
+            self.due_difference = self.amount
 
     def action_due_payment_line(self):
             if self.is_generated:
